@@ -5,6 +5,7 @@ export default function Loader({ progress }) {
   const canvasRef = useRef(null);
   const [bootIndex, setBootIndex] = useState(0);
   const [isGlitching, setIsGlitching] = useState(false);
+  const glitchSoundRef = useRef(null);
 
   const bootMessages = [
     "Initializing virtual environment...",
@@ -41,6 +42,7 @@ export default function Loader({ progress }) {
     const distortion = audioContext.createWaveShaper();
     let source = null;
 
+    // Load boot-voice
     fetch("/sounds/boot-voice.mp3")
       .then((res) => res.arrayBuffer())
       .then((data) => audioContext.decodeAudioData(data))
@@ -57,8 +59,15 @@ export default function Loader({ progress }) {
 
         source.start(0);
 
-        // Store everything for glitch logic
         bootVoice.current = { distortion, gainNode, source, audioContext };
+      });
+
+    // Load glitch sound separately
+    fetch("/sounds/glitch-sounds-26212.mp3")
+      .then((res) => res.arrayBuffer())
+      .then((data) => audioContext.decodeAudioData(data))
+      .then((buffer) => {
+        glitchSoundRef.current = buffer;
       });
 
     return () => {
@@ -72,36 +81,94 @@ export default function Loader({ progress }) {
   }, []);
 
   useEffect(() => {
-    const glitchTimer = setInterval(() => {
-      const shouldGlitch = Math.random() > 0.7;
-      if (shouldGlitch) {
+    let glitchSource = null;
+
+    const glitchTimer = setInterval(async () => {
+      const shouldGlitch = Math.random() > 0.6;
+
+      if (
+        shouldGlitch &&
+        glitchSoundRef.current &&
+        bootVoice.current?.audioContext
+      ) {
+        const ctx = bootVoice.current.audioContext;
+
+        // ⚠️ Ensure context is resumed (required on some browsers)
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+        }
+
+        console.log("⚡ Glitch starting...");
+
         setIsGlitching(true);
 
-        // Apply glitch distortion effect
-        if (bootVoice.current?.distortion) {
-          bootVoice.current.distortion.curve = makeDistortionCurve(400);
+        // Create glitch audio source
+        glitchSource = ctx.createBufferSource();
+        glitchSource.buffer = glitchSoundRef.current;
+
+        const glitchGain = ctx.createGain();
+        glitchGain.gain.value = 0.05 + Math.random() * 0.05;
+
+        glitchSource.connect(glitchGain);
+        glitchGain.connect(ctx.destination);
+
+        const duration = glitchSoundRef.current.duration;
+        const randomOffset = Math.max(
+          0,
+          Math.min(duration - 0.5, Math.random() * duration)
+        );
+        console.log("🎧 Playing glitch at offset:", randomOffset.toFixed(2));
+
+        try {
+          glitchSource.start(0, randomOffset);
+        } catch (e) {
+          console.warn("Failed to start glitch sound:", e);
+        }
+
+        glitchSource.stop(ctx.currentTime + 0.7);
+
+        glitchSource.onended = () => {
+          console.log("🛑 Glitch sound ended.");
+          try {
+            glitchSource.disconnect();
+            glitchGain.disconnect();
+          } catch {}
+        };
+
+        // Add distortion
+        if (bootVoice.current.distortion) {
+          bootVoice.current.distortion.curve = makeDistortionCurve(800);
         }
 
         setTimeout(() => {
           setIsGlitching(false);
-          if (bootVoice.current?.distortion) {
-            bootVoice.current.distortion.curve = null; // remove glitch
+
+          if (bootVoice.current.distortion) {
+            bootVoice.current.distortion.curve = null;
           }
-        }, 1000);
+        }, 700);
       }
     }, 2000);
 
-    return () => clearInterval(glitchTimer);
+    return () => {
+      clearInterval(glitchTimer);
+      if (glitchSource) {
+        try {
+          glitchSource.stop();
+          glitchSource.disconnect();
+        } catch {}
+      }
+    };
   }, []);
 
   useEffect(() => {
     const glitchTimer = setInterval(() => {
-      const shouldGlitch = Math.random() > 0.7; // ~30% chance to glitch
+      const shouldGlitch = Math.random() > 0.5; // ~50% chance to glitch
       if (shouldGlitch) {
         setIsGlitching(true);
         setTimeout(() => setIsGlitching(false), 1000); // glitch lasts for 1s
       }
-    }, 2000); // check every 2s
+    }, 1500); // check every 1.5s
 
     return () => clearInterval(glitchTimer);
   }, []);

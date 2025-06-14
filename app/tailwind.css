@@ -59,3 +59,360 @@ body {
 .scrollbar-track-gray-800::-webkit-scrollbar-track {
   background-color: #1f2937; /* gray-800 */
 }
+
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap");
+@import url("https://unpkg.com/normalize.css") layer(normalize);
+
+@layer normalize, base, demo;
+
+@layer demo {
+  :root {
+    --cable: color-mix(in lch, canvasText, canvas 35%);
+    --claw: color-mix(in lch, canvasText, canvas 15%);
+    --head: color-mix(in lch, canvasText, canvas 25%);
+  }
+
+  .tagline {
+    --font-level: 6;
+    height: 1em;
+    overflow: visible !important;
+  }
+
+  header {
+    position: relative;
+  }
+
+  p {
+    --font-level: 0.5;
+    --font-size-min: 12;
+    --font-size-max: 16;
+    margin: 0;
+    text-indent: 0.5ch;
+    font-weight: 100;
+    text-transform: uppercase;
+    font-family: "Geist Mono", monospace;
+    opacity: 0.875;
+  }
+
+  :root {
+    --delay: 1s;
+    --speed: 2.4s;
+  }
+
+  .construct {
+    animation: slide-in var(--speed) var(--delay) ease-out both;
+  }
+  .claw {
+    animation: slide-out var(--speed) var(--delay) ease-in both;
+  }
+  .claw path {
+    animation: let-go var(--speed) var(--delay) ease-out both;
+  }
+
+  .construct--horizontal {
+    --delay: calc((var(--base-delay, 1) + var(--cross-delay, 1)) * 1s);
+    --speed: calc(var(--cross-speed, 1) * 1s);
+  }
+  .construct--vertical {
+    --delay: calc((var(--base-delay, 1) + var(--dot-delay, 1)) * 1s);
+    --speed: calc(var(--dot-speed, 1) * 1s);
+  }
+
+  @keyframes let-go {
+    0%,
+    48% {
+      rotate: var(--start);
+    }
+    50%,
+    100% {
+      rotate: var(--end);
+    }
+  }
+
+  @keyframes slide-in {
+    0% {
+      transform: translate(var(--x, 0), var(--y, 0));
+    }
+    40%,
+    100% {
+      transform: translate(0, 0);
+    }
+  }
+
+  @keyframes slide-out {
+    0%,
+    60% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(var(--x, 0), var(--y, 0));
+    }
+  }
+
+  .construct,
+  .claw,
+  .cross,
+  .dot,
+  .claw path {
+    transform-box: fill-box;
+  }
+
+  .construct--horizontal {
+    --x: -100vmax;
+  }
+  .construct--vertical {
+    --y: -150vmax;
+  }
+
+  .claw--horizontal {
+    transform-origin: 50% 50%;
+  }
+
+  .claw path {
+    stroke: var(--claw);
+  }
+
+  .claw line {
+    stroke: var(--cable);
+  }
+
+  .claw circle {
+    fill: var(--head);
+    stroke: var(--head);
+  }
+
+  .claw--vertical path:nth-of-type(1) {
+    transform-origin: 0 0;
+    rotate: -25deg;
+    --start: 0;
+    --end: -25deg;
+  }
+  .claw--vertical path:nth-of-type(2) {
+    transform-origin: 100% 0;
+    rotate: 25deg;
+    --start: 0;
+    --end: 25deg;
+  }
+  .claw--horizontal path:nth-of-type(1) {
+    transform-origin: 0 100%;
+    rotate: 4deg;
+    --start: 4deg;
+    --end: -25deg;
+  }
+  .claw--horizontal path:nth-of-type(2) {
+    transform-origin: 0 100%;
+    rotate: -4deg;
+    --start: -4deg;
+    --end: 25deg;
+  }
+}
+
+@layer base {
+  :root {
+    --font-size-min: 16;
+    --font-size-max: 20;
+    --font-ratio-min: 1.2;
+    --font-ratio-max: 1.33;
+    --font-width-min: 375;
+    --font-width-max: 1500;
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+
+  [data-theme="light"] {
+    color-scheme: light only;
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark only;
+  }
+
+  :where(.fluid) {
+    --fluid-min: calc(
+      var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0))
+    );
+    --fluid-max: calc(
+      var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0))
+    );
+    --fluid-preferred: calc(
+      (var(--fluid-max) - var(--fluid-min)) /
+        (var(--font-width-max) - var(--font-width-min))
+    );
+    --fluid-type: clamp(
+      (var(--fluid-min) / 16) * 1rem,
+      ((var(--fluid-min) / 16) * 1rem) -
+        (((var(--fluid-preferred) * var(--font-width-min)) / 16) * 1rem) +
+        (var(--fluid-preferred) * var(--variable-unit, 100vi)),
+      (var(--fluid-max) / 16) * 1rem
+    );
+    font-size: var(--fluid-type);
+  }
+
+  *,
+  *:after,
+  *:before {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: light-dark(#fff, #000);
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    font-family: "SF Pro Text", "SF Pro Icons", "AOS Icons", "Helvetica Neue",
+      Helvetica, Arial, sans-serif, system-ui;
+  }
+
+  body::before {
+    --size: 45px;
+    --line: color-mix(in hsl, canvasText, transparent 70%);
+    content: "";
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    background: linear-gradient(
+          90deg,
+          var(--line) 1px,
+          transparent 1px var(--size)
+        )
+        50% 50% / var(--size) var(--size),
+      linear-gradient(var(--line) 1px, transparent 1px var(--size)) 50% 50% /
+        var(--size) var(--size);
+    mask: linear-gradient(-20deg, transparent 50%, white);
+    top: 0;
+    transform-style: flat;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .bear-link {
+    color: canvasText;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: 48px;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    opacity: 0.8;
+  }
+
+  :where(.x-link, .bear-link):is(:hover, :focus-visible) {
+    opacity: 1;
+  }
+
+  .bear-link svg {
+    width: 75%;
+  }
+
+  /* Utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+div.tp-dfwv {
+  font-family: monospace;
+  position: fixed;
+  bottom: 8px;
+  top: unset;
+  width: 276px;
+}
+
+.hyperplexed-title {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(3rem, 10vw, 10rem);
+  color: white;
+  padding: 0rem clamp(1rem, 2vw, 3rem);
+  border-radius: clamp(0.4rem, 0.75vw, 1rem);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hyperplexed-title:hover {
+  background-color: white;
+  color: black;
+}
+
+.glitch-intro-title {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(3rem, 10vw, 10rem);
+  color: white;
+  padding: 0 clamp(1rem, 2vw, 3rem);
+  border-radius: clamp(0.4rem, 0.75vw, 1rem);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.glitch-intro-title::selection {
+  background: transparent;
+}
+
+/* Fade-out animation */
+@keyframes fadeout {
+  0% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.animate-fadeout {
+  animation: fadeout 3s forwards;
+}
+.glitch-intro-title {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(3rem, 10vw, 10rem);
+  color: white;
+  padding: 0 clamp(1rem, 2vw, 3rem);
+  border-radius: clamp(0.4rem, 0.75vw, 1rem);
+  opacity: 0;
+  transform: scale(0.95);
+  animation: fadeInTitle 2s forwards;
+}
+
+/* Fade In */
+@keyframes fadeInTitle {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.glitch-intro-title {
+  font-family: "Space Mono", monospace;
+  font-size: clamp(3rem, 10vw, 10rem);
+  color: white;
+  padding: 0 clamp(1rem, 2vw, 3rem);
+  border-radius: clamp(0.4rem, 0.75vw, 1rem);
+  opacity: 0;
+  transform: scale(0.95);
+  animation: fadeInTitle 2.5s forwards;
+}
+
+@keyframes fadeInTitle {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
